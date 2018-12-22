@@ -3,41 +3,86 @@
 
 OledWingAdafruit display;
 
-SYSTEM_MODE(MANUAL);
+SYSTEM_MODE(SEMI_AUTOMATIC);
 SYSTEM_THREAD(ENABLED);
 
 void startupTasks()
 {
-  Serial.begin(115200);
+        Serial.begin(115200);
 }
 STARTUP(startupTasks());
 
+int cloudOledPrint(const char *message)
+{
+        display.clearDisplay();
+
+        display.setTextSize(1);
+        display.setTextColor(WHITE);
+        display.setCursor(0,0);
+        display.println(message);
+        display.display();
+
+        return 0;
+}
 
 void setup() // Put setup code here to run once
 {
-  display.setup();
+        pinMode(BATT, INPUT);
 
-  	display.clearDisplay();
-  	display.display();
+        display.setup();
+        display.clearDisplay();
+        display.display();
+
+        Particle.connect();
+        Particle.function("oled", cloudOledPrint);
+}
+
+void oledPrint(const char *message)
+{
+        display.clearDisplay();
+
+        display.setTextSize(1);
+        display.setTextColor(WHITE);
+        display.setCursor(0,0);
+        display.println(message);
+        display.display();
 }
 
 void loop() // Put code here to loop forever
 {
-  display.loop();
+        static uint32_t msDelay = 0;
+        static bool printStats = false;
 
-  	if (display.pressedA()) {
-  		display.clearDisplay();
+        display.loop();
 
-  		display.setTextSize(1);
-  		display.setTextColor(WHITE);
-  		display.setCursor(0,0);
-  		display.println("CHUNGUS");
-  		display.display();
-  	}
+        if (printStats) {
+                if (millis() - msDelay > 1000) {
+                        msDelay = millis();
+                        double voltage = analogRead(BATT) * 0.0011224;
+                        char message[40];
+                        snprintf(message, sizeof(message), "%ld seconds %.2f volts", millis() / 1000, voltage);
+                        oledPrint(message);
+                }
+        }
 
-  	if (display.pressedB()) {
-  	}
 
-  	if (display.pressedC()) {
-  	}
+        if (display.pressedA()) {
+                display.clearDisplay();
+
+                display.setTextSize(1);
+                display.setTextColor(WHITE);
+                display.setCursor(0,0);
+                display.println("BIG CHUNGUS");
+                display.display();
+        }
+
+        if (display.pressedB()) {
+
+        }
+
+        if (display.pressedC()) {
+                display.clearDisplay();
+                display.display();
+                printStats=!printStats;
+        }
 }
