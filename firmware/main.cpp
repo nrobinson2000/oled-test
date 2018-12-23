@@ -9,6 +9,9 @@ SYSTEM_THREAD(ENABLED);
 void startupTasks()
 {
         Serial.begin(115200);
+        RGB.control(true);
+        RGB.brightness(2);
+        RGB.control(false);
 }
 STARTUP(startupTasks());
 
@@ -50,17 +53,18 @@ void oledPrint(const char *message)
 
 void loop() // Put code here to loop forever
 {
-        static uint32_t msDelay = 0;
-        static bool printStats = false;
-
         display.loop();
 
+        static bool printStats = true;
         if (printStats) {
-                if (millis() - msDelay > 1000) {
+                static unsigned long msDelay = 0;
+                if (millis() - msDelay >= 1000) {
                         msDelay = millis();
                         double voltage = analogRead(BATT) * 0.0011224;
-                        char message[40];
-                        snprintf(message, sizeof(message), "%ld seconds %.2f volts", millis() / 1000, voltage);
+                        int rssi = WiFi.RSSI().rssi;
+                        double signalQuality = WiFi.RSSI().getQuality();
+                        char message[100];
+                        snprintf(message, sizeof(message), "u:%ld v:%.2f r:%d\ns:%.2f t:%ld", millis() / 1000, voltage, rssi, signalQuality, Time.now());
                         oledPrint(message);
                 }
         }
@@ -69,10 +73,10 @@ void loop() // Put code here to loop forever
         if (display.pressedA()) {
                 display.clearDisplay();
 
-                display.setTextSize(1);
+                display.setTextSize(4);
                 display.setTextColor(WHITE);
                 display.setCursor(0,0);
-                display.println("BIG CHUNGUS");
+                display.println("DERP!");
                 display.display();
         }
 
